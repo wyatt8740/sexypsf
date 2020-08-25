@@ -141,6 +141,7 @@ void sexyd_update(unsigned char* pSound, long lBytes)
   snd_pcm_hw_params_get_period_time(alsa_params, &alsa_tmp, NULL);
   /* quit if stdin immediately contains data, and starts with a 'q'
      (user requests quit) */
+  #ifndef NONINTERACTIVE
   if(!ioctl(fileno(stdin),FIONREAD,&check))
   {
     if(check)
@@ -150,6 +151,7 @@ void sexyd_update(unsigned char* pSound, long lBytes)
       if(buf[0]=='q') sexy_stop();
     }
   }
+  #endif
 }
 
 void RemoveSound(void)
