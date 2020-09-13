@@ -18,7 +18,8 @@ OBJS = ../PsxBios.o ../PsxCounters.o ../PsxDma.o \
 
 OBJS+= LnxMain.o
 
-CFLAGS += -Wall -Winline -I. -I.. ${FLAGS}
+# Need -fcommon for GCC 10+
+CFLAGS += -fcommon -Wall -Winline -I. -I.. ${FLAGS}
 #CFLAGS+= $(shell pkg-config gtk+-2.0 --cflags)
 
 sexypsf:	${OBJS}
