@@ -29,8 +29,7 @@ ifeq (${CPU}, MSBFIRST)
 	FLAGS+=-DMSB_FIRST
 endif
 
-# -fcommon needed for GCC 10+
-CFLAGS += -fcommon -Wall -I. ${FLAGS}
+CFLAGS += -Wall -I. ${FLAGS}
 
 sexypsf: ${OBJS}
 	${CC} ${LDFLAGS} ${OBJS} -o libsexypsf.so ${LIBS}
