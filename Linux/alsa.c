@@ -82,7 +82,7 @@ void SetupSound(void)
     fprintf(stderr,"Error setting interleaved mode: %s\n", snd_strerror(alsa_pcm));
   }
   if ((alsa_pcm = snd_pcm_hw_params_set_format(alsa_pcm_handle, alsa_params,
-                                               SND_PCM_FORMAT_S16_LE))
+                                               SND_PCM_FORMAT_S16))
       < 0)
   {
     fprintf(stderr, "Error setting PCM format: %s\n", snd_strerror(alsa_pcm));
