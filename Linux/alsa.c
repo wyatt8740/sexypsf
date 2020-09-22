@@ -123,7 +123,9 @@ void SetupSound(void)
 
 void sexyd_update(unsigned char* pSound, long lBytes)
 {
+#ifndef NONINTERACTIVE
   int check;
+#endif
   if(!alsa_pcm_handle) {
     return;
   }
