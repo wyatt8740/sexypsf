@@ -14,7 +14,7 @@ LIBS = -lz -lasound -lncurses
 OBJS = ../PsxBios.o ../PsxCounters.o ../PsxDma.o \
        ../Spu.o ../PsxHw.o ../PsxMem.o ../Misc.o \
        ../R3000A.o ../PsxInterpreter.o \
-       ../PsxHLE.o ../spu/spu.o alsa.o
+       ../PsxHLE.o ../spu/spu.o alsa_adj.o
 
 OBJS+= LnxMain.o
 

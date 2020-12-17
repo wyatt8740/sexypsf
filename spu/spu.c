@@ -102,6 +102,8 @@ static u8 * pSpuBuffer;
 
 // user settings          
 static int             iVolume;
+int *volPt=&iVolume;
+extern int *volPrimePt;
                                
 // MAIN infos struct for each channel
 
@@ -210,7 +212,14 @@ int sexy_seek(u32 t)
 #define CLIP(_x) {if(_x>32767) _x=32767; if(_x<-32767) _x=-32767;}
 int SPUasync(u32 cycles)
 {
- int volmul=iVolume;
+  extern int* volPrimePt;
+  if(*volPrimePt)
+  {
+    iVolume=*volPrimePt;
+    *volPrimePt=0;
+  }
+  int volmul=iVolume;
+/* int volmul=&iVolume;*/
  static s32 dosampies;
  s32 temp;
 
@@ -458,8 +467,10 @@ int SPUasync(u32 cycles)
    }
   }
   sampcount++;
-  sl=(sl*volmul)>>8;
-  sr=(sr*volmul)>>8;
+/*  sl=(sl*volmul)>>8;
+    sr=(sr*volmul)>>8;*/
+  sl=(sl*iVolume)>>8;
+  sr=(sr*iVolume)>>8;
 
   //{
   // static double asl=0;
@@ -601,7 +612,7 @@ int SPUopen(void)
  memset((void *)s_chan,0,(MAXCHAN+1)*sizeof(SPUCHAN));
  pSpuIrq=0;
 
- iVolume=128; //85;
+ iVolume=*volPrimePt; //85;
  SetupStreams();                                       // prepare streaming
 
  bSPUIsOpen=1;

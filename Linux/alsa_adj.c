@@ -43,13 +43,15 @@
 #include <sys/stat.h>
 #include <sched.h>
 
+#include <termios.h>
+
+#include <ncurses.h>
+
 /* alsa globals */
 #include <alsa/asoundlib.h>
 
 /* sexy_stop defined elsewhere (../)*/
 #include <driver.h>
-
-#include <ncurses.h>
 
 #define PCM_DEVICE "default"
 snd_pcm_t *alsa_pcm_handle;
@@ -59,7 +61,6 @@ int alsa_channels=2;
 unsigned int alsa_rate=44100;
 unsigned int alsa_pcm;
 unsigned int alsa_tmp;
-
 
 /* func signatures */
 void SetupSound(void);
@@ -84,7 +85,7 @@ void SetupSound(void)
     fprintf(stderr,"Error setting interleaved mode: %s\n", snd_strerror(alsa_pcm));
   }
   if ((alsa_pcm = snd_pcm_hw_params_set_format(alsa_pcm_handle, alsa_params,
-                                               SND_PCM_FORMAT_S16)) /* SE or BE autodetermined */
+                                               SND_PCM_FORMAT_S16)) /* LE or BE autodetermined */
       < 0)
   {
     fprintf(stderr, "Error setting PCM format: %s\n", snd_strerror(alsa_pcm));
@@ -109,27 +110,23 @@ void SetupSound(void)
   {
     fprintf(stderr,"Error setting PCM hardware parameters: %s\n", snd_strerror(alsa_pcm));
   }
-  printw("Using PCM:  '%s'\n", snd_pcm_name(alsa_pcm_handle));
-  refresh();
+  printw("Using PCM:\t'%s'\n", snd_pcm_name(alsa_pcm_handle));
   snd_pcm_hw_params_get_channels(alsa_params, &alsa_tmp);
-  printw("PCM channels: %i ", alsa_tmp);
+  printw("PCM channels:\t%i ", alsa_tmp);
   if (alsa_tmp == 1) {
     printw("(mono)\n");
-    refresh();
   }
   else if (alsa_tmp == 2) {
     printw("(stereo)\n");
-    refresh();
   }
   snd_pcm_hw_params_get_rate(alsa_params, &alsa_tmp, 0);
-  printw("Sample rate: %d bps\n", alsa_tmp);
+  printw("Sample rate:\t%d Hz\n", alsa_tmp);
   snd_pcm_hw_params_get_period_size(alsa_params, &alsa_periods, 0);
 }
 
 void sexyd_update(unsigned char* pSound, long lBytes)
 {
   int check;
-  int curpos_x, curpos_y;
   if(!alsa_pcm_handle) {
     return;
   }
@@ -139,26 +136,61 @@ void sexyd_update(unsigned char* pSound, long lBytes)
      and two bytes per channel = four bytes total.
   */
   if ((alsa_pcm = snd_pcm_writei(alsa_pcm_handle, pSound, lBytes / 4) == -EPIPE)) {
-    getyx(stdscr,curpos_y,curpos_x);
-    move(curpos_y, 0);
-    clrtoeol();
     printw("XRUN.\n");
-    refresh();
     snd_pcm_prepare(alsa_pcm_handle);
   } else if (alsa_pcm < 0) {
-    fprintf(stderr,"ERROR. Can't write to PCM device. %s\n", snd_strerror(alsa_pcm));
+    printw("ERROR. Can't write to PCM device. %s\n", snd_strerror(alsa_pcm));
   }
   snd_pcm_hw_params_get_period_time(alsa_params, &alsa_tmp, NULL);
   /* quit if stdin immediately contains data, and starts with a 'q'
      (user requests quit) */
   #ifndef NONINTERACTIVE
+  extern int* volPt; /* for volume control, defined in spu.c */
   if(!ioctl(fileno(stdin),FIONREAD,&check))
   {
     if(check)
     {
-      char buf[256];
-      fgets(buf,256,stdin);
-      if(buf[0]=='q') sexy_stop();
+      int curpos_y, curpos_x;
+      int buf[256];
+   /* char buf[256];
+      fgets(buf,256,stdin);*/
+      refresh();
+      buf[0]=wgetch(stdscr);
+      refresh();
+      switch(buf[0])
+      {
+      case 'q':
+        sexy_stop();
+        break;
+      case '/':
+      case 'd':
+//        printw("volPt: %d -> ",*volPt);
+        /* volume down, min 0 */
+        if(*volPt >= 1)
+        {
+          *volPt = *volPt - 1;
+        }
+        getyx(stdscr,curpos_y,curpos_x);
+        move(curpos_y, 0);
+        clrtoeol();
+        printw("Volume: %d",*volPt);
+        refresh();
+        break;
+      case '*':
+      case 'u':
+//        printw("volPt: %d -> ",*volPt);
+        /* volume up, max 128 */
+        if(*volPt <= 127)
+        {
+          *volPt = *volPt + 1;
+        }
+        getyx(stdscr,curpos_y,curpos_x);
+        move(curpos_y, 0);
+        clrtoeol();
+        printw("Volume: %d",*volPt);
+        refresh();
+        break;
+      }
     }
   }
   #endif

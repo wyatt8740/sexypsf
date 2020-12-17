@@ -28,26 +28,54 @@
 #include "driver.h"
 #include "Linux.h"
 
+#include <ncurses.h>
+
+static int volPrime=128;
+int *volPrimePt=&volPrime;
+
 int main(int argc, char *argv[]) {
+
+  newterm(NULL, stdout, stdin);
+  noecho();
+  refresh();
 	PSFINFO *pi;
 
 	SetupSound();
-	if(!(pi=sexy_load(argv[1])))
+        int i=1;
+         while(i<argc)// only last argument can be filename
+        {
+          if(strncmp(argv[i],"-v",3)==0)
+          {
+            i++;
+              extern int* volPt;
+              *volPt=atoi(argv[i]);
+              *volPrimePt=atoi(argv[i]);
+/*              printw("vol: %s (%d)\n",argv[i], *volPt);
+                refresh();*/
+          }
+          i++;
+        }
+        printw("Opening '%s'.\n",argv[argc-1]);
+	if(!(pi=sexy_load(argv[argc-1])))
 	{
-	 puts("Error loading PSF");
+          endwin();
+          printf("Error loading PSF %s\n",argv[argc-1]);
 	 return(-1);
 	}
 
-	printf("Game:\t%s\nTitle:\t%s\nArtist:\t%s\nYear:\t%s\nGenre:\t%s\nPSF By:\t%s\nCopyright:\t%s\n",
+/*	printw("Game:\t%s\nTitle:\t%s\nArtist:\t%s\nYear:\t%s\nGenre:\t%s\nPSF By:\t%s\nCopyright:\t%s\n",
 		pi->game,pi->title,pi->artist,pi->year,pi->genre,pi->psfby,pi->copyright);
+        refresh();*/
 	{
 	 PSFTAG *recur=pi->tags;
  	 while(recur)
 	 {
-	  printf("%s:\t%s\n",recur->key,recur->value);
+	  printw("%s:\t%s\n",recur->key,recur->value);
 	  recur=recur->next;
 	 }
-	}
+        }
+         refresh();
 	sexy_execute();
+        endwin();
 	return 0;
 }
